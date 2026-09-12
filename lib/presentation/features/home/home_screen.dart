@@ -1,8 +1,7 @@
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/file_picker_util.dart';
 import '../../../core/widgets/melo_logo_widget.dart';
 import '../../providers/song_providers.dart';
 import '../backup/backup_restore_dialog.dart';
@@ -22,32 +21,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _uploadMidiFile() async {
     try {
-      final files = await FilePickerPlatform.instance.pickFiles(
-        type: FileType.custom,
+      final picked = await FilePickerUtil.pickFile(
         allowedExtensions: ['mid', 'midi'],
       );
 
-      if (files.isEmpty) return;
+      if (picked == null) return;
 
-      final file = files.first;
-      final path = file.path;
-      if (path == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Could not access selected MIDI file path.'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-        return;
-      }
-
-      final bytes = await File(path).readAsBytes();
-      final title = file.name.replaceAll(RegExp(r'\.(mid|midi)$', caseSensitive: false), '');
+      final title = picked.name.replaceAll(RegExp(r'\.(mid|midi)$', caseSensitive: false), '');
 
       final notifier = ref.read(songListProvider.notifier);
-      final song = await notifier.addMidiSong(title, bytes);
+      final song = await notifier.addMidiSong(title, picked.bytes);
 
       if (mounted && song != null) {
         ScaffoldMessenger.of(context).showSnackBar(

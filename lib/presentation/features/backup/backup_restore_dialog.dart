@@ -1,9 +1,8 @@
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/file_picker_util.dart';
 import '../../providers/song_providers.dart';
 
 class BackupRestoreDialog extends ConsumerStatefulWidget {
@@ -45,21 +44,11 @@ class _BackupRestoreDialogState extends ConsumerState<BackupRestoreDialog> {
   }
 
   void _importBackup() async {
-    final files = await FilePickerPlatform.instance.pickFiles(
-      type: FileType.custom,
+    final picked = await FilePickerUtil.pickFile(
       allowedExtensions: ['zip'],
     );
 
-    if (files.isEmpty) return;
-
-    final file = files.first;
-    final path = file.path;
-    if (path == null) {
-      setState(() => _statusMessage = 'Could not access selected backup file path.');
-      return;
-    }
-
-    final bytes = await File(path).readAsBytes();
+    if (picked == null) return;
 
     setState(() {
       _isLoading = true;
@@ -67,7 +56,7 @@ class _BackupRestoreDialogState extends ConsumerState<BackupRestoreDialog> {
     });
 
     final backupService = ref.read(backupRestoreServiceProvider);
-    final result = await backupService.restoreBackupZip(bytes);
+    final result = await backupService.restoreBackupZip(picked.bytes);
 
     if (mounted) {
       setState(() {
