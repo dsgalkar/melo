@@ -5,14 +5,18 @@ echo "=================================================="
 echo "      Melo - Vercel Flutter Web Build Script      "
 echo "=================================================="
 
+# Configure Git safe directory to prevent ownership warnings in container
+git config --global --add safe.directory "*" 2>/dev/null || true
+
 # Check if Flutter is already installed in environment
 if ! command -v flutter &> /dev/null; then
-  echo "Flutter not found in PATH. Checking local directory..."
+  echo "Flutter not found in system PATH. Checking local directory..."
   if [ ! -d "flutter" ]; then
     echo "Cloning Flutter SDK (stable branch)..."
     git clone https://github.com/flutter/flutter.git -b stable --depth 1 flutter
   fi
-  export PATH="$PATH:$(pwd)/flutter/bin"
+  export FLUTTER_ROOT="$(pwd)/flutter"
+  export PATH="$(pwd)/flutter/bin:$PATH"
 fi
 
 echo "Flutter version:"
