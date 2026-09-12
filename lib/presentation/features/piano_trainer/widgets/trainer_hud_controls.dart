@@ -12,6 +12,8 @@ class TrainerHudControls extends StatelessWidget {
   final VoidCallback onToggleDeskCamera;
   final VoidCallback onToggleRecording;
   final Function(int start, int end) onOctaveChanged;
+  final VoidCallback onToggleFullscreen;
+  final bool isFullscreen;
 
   const TrainerHudControls({
     super.key,
@@ -24,6 +26,8 @@ class TrainerHudControls extends StatelessWidget {
     required this.onToggleDeskCamera,
     required this.onToggleRecording,
     required this.onOctaveChanged,
+    required this.onToggleFullscreen,
+    this.isFullscreen = false,
   });
 
   @override
@@ -239,6 +243,17 @@ class TrainerHudControls extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+
+          // 7. Fullscreen Toggle Button
+          IconButton(
+            onPressed: onToggleFullscreen,
+            icon: Icon(
+              isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
+              color: isFullscreen ? AppColors.primaryGold : Colors.white70,
+              size: 26,
+            ),
+            tooltip: isFullscreen ? 'Exit Full Screen' : 'Full Screen Mode (Maximize Keys)',
           ),
         ],
       ),

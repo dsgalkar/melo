@@ -107,25 +107,30 @@ class VirtualPianoPainter extends CustomPainter {
     if (isActive) {
       final glowPaint = Paint()
         ..color = AppColors.activeNoteGlow.withValues(alpha: 0.65)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 10);
+        ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 12);
       canvas.drawRRect(rrect, glowPaint);
 
-      // Target Beacon Ring at the lower third of the key
-      final beaconCenter = Offset(rect.left + rect.width / 2, rect.bottom - 44);
+      // Target Beacon Ring dynamically positioned
+      final beaconRadius = (rect.width * 0.25).clamp(10.0, 16.0);
+      final beaconCenter = Offset(
+        rect.left + rect.width / 2,
+        rect.bottom - (rect.height * 0.22).clamp(38.0, 65.0),
+      );
       final beaconBgPaint = Paint()..color = Colors.black87;
-      canvas.drawCircle(beaconCenter, 12, beaconBgPaint);
+      canvas.drawCircle(beaconCenter, beaconRadius, beaconBgPaint);
 
       final beaconRingPaint = Paint()
         ..color = AppColors.activeNoteGlow
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.5;
-      canvas.drawCircle(beaconCenter, 12, beaconRingPaint);
+      canvas.drawCircle(beaconCenter, beaconRadius, beaconRingPaint);
 
       // Downward pointer triangle
+      final arrowSize = beaconRadius * 0.45;
       final arrowPath = Path()
-        ..moveTo(beaconCenter.dx - 5, beaconCenter.dy - 3)
-        ..lineTo(beaconCenter.dx + 5, beaconCenter.dy - 3)
-        ..lineTo(beaconCenter.dx, beaconCenter.dy + 4)
+        ..moveTo(beaconCenter.dx - arrowSize, beaconCenter.dy - arrowSize * 0.6)
+        ..lineTo(beaconCenter.dx + arrowSize, beaconCenter.dy - arrowSize * 0.6)
+        ..lineTo(beaconCenter.dx, beaconCenter.dy + arrowSize * 0.8)
         ..close();
       canvas.drawPath(arrowPath, Paint()..color = AppColors.activeNoteGlow);
     }
@@ -137,6 +142,9 @@ class VirtualPianoPainter extends CustomPainter {
       final qwertyKey = PianoConstants.getQwertyKeyForMidi(midiNote);
       final isC = noteName.startsWith('C') && !noteName.startsWith('C#');
 
+      final fontSize = (rect.width * 0.28).clamp(11.0, 18.0);
+      final subFontSize = (rect.width * 0.22).clamp(9.0, 14.0);
+
       // Primary Note Name (e.g. C4)
       final textSpan = TextSpan(
         text: noteName,
@@ -144,7 +152,7 @@ class VirtualPianoPainter extends CustomPainter {
           color: isPressed || isActive
               ? Colors.black87
               : (isC ? AppColors.primaryAmber : Colors.black87),
-          fontSize: 11,
+          fontSize: fontSize,
           fontWeight: isC || isActive || isPressed ? FontWeight.w900 : FontWeight.bold,
         ),
       );
@@ -155,12 +163,12 @@ class VirtualPianoPainter extends CustomPainter {
 
       final textPos = Offset(
         rect.left + (rect.width - tp.width) / 2,
-        rect.bottom - tp.height - 8,
+        rect.bottom - tp.height - (rect.height * 0.05).clamp(6.0, 16.0),
       );
       tp.paint(canvas, textPos);
 
       // Solfège / QWERTY Keyboard hint above the note name
-      if (rect.height > 90) {
+      if (rect.height > 80) {
         final subLabel = qwertyKey != null ? '[$qwertyKey]' : solfege;
         final subSpan = TextSpan(
           text: subLabel,
@@ -168,7 +176,7 @@ class VirtualPianoPainter extends CustomPainter {
             color: isPressed || isActive
                 ? Colors.black54
                 : (isC ? AppColors.primaryGold : Colors.black38),
-            fontSize: 9,
+            fontSize: subFontSize,
             fontWeight: FontWeight.bold,
           ),
         );
@@ -179,7 +187,7 @@ class VirtualPianoPainter extends CustomPainter {
 
         final subPos = Offset(
           rect.left + (rect.width - subTp.width) / 2,
-          rect.bottom - tp.height - subTp.height - 10,
+          textPos.dy - subTp.height - 3,
         );
         subTp.paint(canvas, subPos);
       }
@@ -250,11 +258,15 @@ class VirtualPianoPainter extends CustomPainter {
         ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 10);
       canvas.drawRRect(rrect, glowPaint);
 
-      final beaconCenter = Offset(rect.left + rect.width / 2, rect.bottom - 26);
-      canvas.drawCircle(beaconCenter, 8, Paint()..color = Colors.black);
+      final blackBeaconRadius = (rect.width * 0.26).clamp(7.0, 12.0);
+      final beaconCenter = Offset(
+        rect.left + rect.width / 2,
+        rect.bottom - (rect.height * 0.20).clamp(20.0, 36.0),
+      );
+      canvas.drawCircle(beaconCenter, blackBeaconRadius, Paint()..color = Colors.black);
       canvas.drawCircle(
         beaconCenter,
-        8,
+        blackBeaconRadius,
         Paint()
           ..color = AppColors.activeNoteGlow
           ..style = PaintingStyle.stroke
@@ -268,11 +280,13 @@ class VirtualPianoPainter extends CustomPainter {
       final qwertyKey = PianoConstants.getQwertyKeyForMidi(midiNote);
       final label = qwertyKey != null ? '[$qwertyKey]' : noteName;
 
+      final blackFontSize = (rect.width * 0.36).clamp(9.0, 14.0);
+
       final textSpan = TextSpan(
         text: label,
         style: TextStyle(
           color: isPressed || isActive ? Colors.black87 : Colors.white70,
-          fontSize: 8.5,
+          fontSize: blackFontSize,
           fontWeight: FontWeight.bold,
         ),
       );
@@ -283,7 +297,7 @@ class VirtualPianoPainter extends CustomPainter {
 
       final textPos = Offset(
         rect.left + (rect.width - tp.width) / 2,
-        rect.bottom - tp.height - 5,
+        rect.bottom - tp.height - (rect.height * 0.05).clamp(4.0, 10.0),
       );
       tp.paint(canvas, textPos);
     }

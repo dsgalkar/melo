@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/fullscreen_util.dart';
 import '../../../data/services/audio_synth_service.dart';
 import '../../../domain/models/learning_session_state.dart';
 import '../../../domain/models/song_model.dart';
@@ -27,6 +28,14 @@ class _PianoTrainerScreenState extends ConsumerState<PianoTrainerScreen> {
   double _deskTiltAngle = 0.28;
   double _deskOpacity = 0.92;
   bool _showDeskGuide = true;
+  bool _isFullscreen = false;
+
+  void _toggleFullscreen() {
+    setState(() {
+      _isFullscreen = !_isFullscreen;
+    });
+    FullscreenUtil.toggleFullscreen();
+  }
 
   @override
   void initState() {
@@ -75,74 +84,82 @@ class _PianoTrainerScreenState extends ConsumerState<PianoTrainerScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        title: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      appBar: _isFullscreen
+          ? null
+          : AppBar(
+              backgroundColor: AppColors.surface,
+              elevation: 0,
+              title: Row(
                 children: [
-                  Text(
-                    widget.song.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.song.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '${songNotes.length} notes • ${widget.song.difficulty} • ${(widget.song.durationMs / 1000).toStringAsFixed(0)}s',
+                          style: const TextStyle(fontSize: 11, color: AppColors.primaryGold),
+                        ),
+                      ],
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    '${songNotes.length} notes • ${widget.song.difficulty} • ${(widget.song.durationMs / 1000).toStringAsFixed(0)}s',
-                    style: const TextStyle(fontSize: 11, color: AppColors.primaryGold),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-        actions: [
-          // Audio Engine Switch (Synthesized vs Studio Samples)
-          Consumer(
-            builder: (context, ref, _) {
-              final audioService = ref.watch(audioSynthServiceProvider);
-              final isStudio = audioService.engineMode == AudioEngineMode.studioSamples;
-              return Tooltip(
-                message: isStudio ? 'Audio: Studio Samples (REST CDN)' : 'Audio: Offline Fast Synth',
-                child: IconButton(
-                  icon: Icon(
-                    isStudio ? Icons.album : Icons.graphic_eq,
-                    color: isStudio ? AppColors.neonCyan : Colors.white70,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      audioService.setEngineMode(
-                        isStudio ? AudioEngineMode.synthesized : AudioEngineMode.studioSamples,
-                      );
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          isStudio ? 'Switched to Offline Procedural Synth' : 'Switched to Studio Samples (REST Cache)',
+              actions: [
+                // Fullscreen Action Button
+                IconButton(
+                  icon: const Icon(Icons.fullscreen, color: AppColors.primaryGold),
+                  tooltip: 'Full Screen Mode (Maximize Keys)',
+                  onPressed: _toggleFullscreen,
+                ),
+                // Audio Engine Switch (Synthesized vs Studio Samples)
+                Consumer(
+                  builder: (context, ref, _) {
+                    final audioService = ref.watch(audioSynthServiceProvider);
+                    final isStudio = audioService.engineMode == AudioEngineMode.studioSamples;
+                    return Tooltip(
+                      message: isStudio ? 'Audio: Studio Samples (REST CDN)' : 'Audio: Offline Fast Synth',
+                      child: IconButton(
+                        icon: Icon(
+                          isStudio ? Icons.album : Icons.graphic_eq,
+                          color: isStudio ? AppColors.neonCyan : Colors.white70,
                         ),
-                        duration: const Duration(seconds: 1),
+                        onPressed: () {
+                          setState(() {
+                            audioService.setEngineMode(
+                              isStudio ? AudioEngineMode.synthesized : AudioEngineMode.studioSamples,
+                            );
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isStudio ? 'Switched to Offline Procedural Synth' : 'Switched to Studio Samples (REST Cache)',
+                              ),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        },
                       ),
                     );
                   },
                 ),
-              );
-            },
-          ),
-          // Desk Camera Settings Sheet
-          if (state.isDeskCameraMode)
-            IconButton(
-              icon: const Icon(Icons.tune, color: AppColors.primaryGold),
-              tooltip: 'Desk Perspective & Opacity',
-              onPressed: () => _showDeskSettingsSheet(context),
+                // Desk Camera Settings Sheet
+                if (state.isDeskCameraMode)
+                  IconButton(
+                    icon: const Icon(Icons.tune, color: AppColors.primaryGold),
+                    tooltip: 'Desk Perspective & Opacity',
+                    onPressed: () => _showDeskSettingsSheet(context),
+                  ),
+              ],
             ),
-        ],
-      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -163,6 +180,8 @@ class _PianoTrainerScreenState extends ConsumerState<PianoTrainerScreen> {
               onToggleDeskCamera: notifier.toggleDeskCameraMode,
               onToggleRecording: _handleToggleRecording,
               onOctaveChanged: notifier.setOctaveRange,
+              onToggleFullscreen: _toggleFullscreen,
+              isFullscreen: _isFullscreen,
             ),
 
             // Target Key Suggestion & Guidance Banner
@@ -184,7 +203,7 @@ class _PianoTrainerScreenState extends ConsumerState<PianoTrainerScreen> {
                       children: [
                         // 1. Falling Notes Waterfall
                         Expanded(
-                          flex: 5,
+                          flex: _isFullscreen ? 4 : 5,
                           child: Container(
                             decoration: const BoxDecoration(
                               color: Color(0xFF090B0E),
@@ -198,9 +217,9 @@ class _PianoTrainerScreenState extends ConsumerState<PianoTrainerScreen> {
                           ),
                         ),
 
-                        // 2. CustomPainter Virtual Piano
+                        // 2. CustomPainter Virtual Piano (Enlarged in Fullscreen)
                         Expanded(
-                          flex: 4,
+                          flex: _isFullscreen ? 6 : 4,
                           child: Container(
                             decoration: const BoxDecoration(
                               boxShadow: [
