@@ -34,7 +34,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (path == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not access selected MIDI file path.')),
+            const SnackBar(
+              content: Text('Could not access selected MIDI file path.'),
+              backgroundColor: AppColors.error,
+            ),
           );
         }
         return;
@@ -49,15 +52,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (mounted && song != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Uploaded "${song.title}" to /VirtualPiano/ successfully!'),
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.black, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Added "${song.title}" (${song.noteCount} notes) to Song Library!',
+                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: AppColors.neonGreen,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload error: $e')),
+          SnackBar(
+            content: Text('Upload error: $e'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     }
