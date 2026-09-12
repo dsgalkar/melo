@@ -1,0 +1,35 @@
+{
+    "name": "Melo - Virtual Piano Trainer",
+    "short_name": "Melo",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0D0F12",
+    "theme_color": "#FFC837",
+    "description": "Melo Virtual Piano Trainer with smart MIDI guidance, desk camera AR overlay, and performance recording.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
