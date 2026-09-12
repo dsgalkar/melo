@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/attempt_repository.dart';
 import '../../data/repositories/song_repository.dart';
@@ -63,14 +64,15 @@ class SongListNotifier extends Notifier<AsyncValue<List<SongModel>>> {
     }
   }
 
-  Future<SongModel?> addMidiSong(String title, dynamic bytes) async {
+  Future<SongModel?> addMidiSong(String title, Uint8List bytes) async {
     try {
       final song = await _repository.uploadMidiSong(title: title, bytes: bytes);
       final current = state.value ?? [];
       state = AsyncValue.data([song, ...current]);
       return song;
-    } catch (e) {
-      return null;
+    } catch (e, st) {
+      debugPrint('SongListNotifier.addMidiSong error: $e\n$st');
+      rethrow;
     }
   }
 

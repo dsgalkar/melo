@@ -18,9 +18,17 @@ class ParsedMidiResult {
 }
 
 class ParseMidiUseCase {
-  /// Parse MIDI bytes asynchronously in an isolate to avoid blocking the main UI thread.
+  /// Parse MIDI bytes asynchronously in an isolate or directly on Web.
   Future<ParsedMidiResult> parseAsync(Uint8List bytes) async {
-    return compute(_parseMidiInternal, bytes);
+    if (kIsWeb) {
+      return _parseMidiInternal(bytes);
+    }
+    try {
+      return await compute(_parseMidiInternal, bytes);
+    } catch (e) {
+      debugPrint('ParseMidiUseCase isolate compute failed, fallback to direct: $e');
+      return _parseMidiInternal(bytes);
+    }
   }
 
   /// Synchronous fallback when running in non-isolate contexts
@@ -51,7 +59,10 @@ ParsedMidiResult _parseMidiInternal(Uint8List bytes) {
     }
   }
 
-  final bpm = 60000000.0 / currentMicrosecondsPerBeat;
+  final rawBpm = (currentMicrosecondsPerBeat > 0 && !currentMicrosecondsPerBeat.isNaN)
+      ? 60000000.0 / currentMicrosecondsPerBeat
+      : 120.0;
+  final bpm = rawBpm.clamp(20.0, 400.0);
 
   // Process tracks
   for (int trackIdx = 0; trackIdx < midiFile.tracks.length; trackIdx++) {
